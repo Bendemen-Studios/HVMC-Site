@@ -1,2 +1,2 @@
-\# Hero's Vault MC
+Hero's Vault
 
