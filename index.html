@@ -32,14 +32,6 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
 @media(max-width:700px){nav{justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;padding:9px 10px}nav::-webkit-scrollbar{display:none}nav a{font-size:14px;padding:8px 9px}.hero{min-height:520px;padding:28px 14px}.hero-box{border-radius:18px;padding:24px 18px}.logo{width:120px;height:120px;margin-bottom:10px}.hero h1{font-size:clamp(38px,12vw,62px)}.hero p,.section p{font-size:16px}.section{padding:55px 16px}.cards,.contact-grid,.form-wrap{grid-template-columns:1fr}.card,.partner,.form,.incident{padding:22px}.partner-logo-link img{width:min(210px,76%);max-height:165px}.tabs,.device-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.tabs::-webkit-scrollbar,.device-tabs::-webkit-scrollbar{display:none}.tab,.device-tab{flex:0 0 auto;font-size:14px}.tab-panel .card{padding:20px}.btn{width:calc(100% - 16px);margin:6px 8px}.recognition-slide,.other-partner-slide{width:200px;min-width:200px;flex-basis:200px}.other-partner-logo-link img{width:135px;max-height:62px}.partner-contact{align-items:flex-start;padding:20px}.partner-contact-links{flex-direction:column;gap:4px}.donate{padding:28px 20px}.motto{gap:6px}.motto-icon{width:15px;height:15px;flex-basis:15px}}
 @media(min-width:701px){#aanmelden,#gamemodes,#kennisbank,#partners,#doneren{scroll-margin-top:80px}}
 
-          /* seamless-partner-slider-fix */
-          .recognitions,.other-partners{overflow:hidden!important;position:relative;width:100%;min-width:0}
-          .recognition-track,.other-partner-track{display:flex!important;width:max-content!important;animation:partner-scroll-seamless 22s linear infinite!important;will-change:transform}
-          .partner-slider-set{display:flex;flex:0 0 auto}
-          .recognition-slide,.other-partner-slide{flex:0 0 220px;width:220px}
-          @keyframes partner-scroll-seamless{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-          @media(max-width:700px){.recognition-slide,.other-partner-slide{flex-basis:200px;width:200px}}
-
 
 /* partner slider animation fix */
 .recognitions,.other-partners{overflow:hidden!important;position:relative;width:100%;min-width:0}
@@ -90,31 +82,48 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
             });
           });
           </script>
-          
+
+
 <script>
 (() => {
-  const setup = (track) => {
+  const waitForImages = async (track) => {
+    const images = Array.from(track.querySelectorAll('img'));
+    await Promise.all(images.map(img => {
+      if (img.complete) return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+      return new Promise(resolve => {
+        img.addEventListener('load', resolve, {once:true});
+        img.addEventListener('error', resolve, {once:true});
+      });
+    }));
+  };
+
+  const setup = async (track) => {
     if (!track) return;
-    const children = Array.from(track.children);
-    if (!children.length) return;
 
-    // Keep exactly two identical sets so the end joins the start seamlessly.
-    const half = children.length / 2;
-    const isDuplicated = Number.isInteger(half) &&
-      children.slice(0, half).every((item, i) => item.outerHTML === children[i + half].outerHTML);
-    if (!isDuplicated) {
-      children.forEach(item => track.appendChild(item.cloneNode(true)));
-    }
+    // Remove any old generated clones before rebuilding the two-set marquee.
+    Array.from(track.children).filter(item => item.dataset.marqueeClone === '1').forEach(item => item.remove());
 
-    const count = isDuplicated ? half : children.length;
-    const originals = Array.from(track.children).slice(0, count);
-    const distance = originals.reduce((sum, item) => sum + item.getBoundingClientRect().width, 0);
+    const originals = Array.from(track.children);
+    if (!originals.length) return;
+
+    // Preload/decode every logo before starting the animation so logos never pop in late.
+    await waitForImages(track);
+
+    originals.forEach(item => {
+      const clone = item.cloneNode(true);
+      clone.dataset.marqueeClone = '1';
+      track.appendChild(clone);
+    });
+
+    const firstSet = Array.from(track.children).slice(0, originals.length);
+    const distance = firstSet.reduce((sum, item) => sum + item.getBoundingClientRect().width, 0);
     if (!distance) return;
 
     track.style.setProperty('--marquee-distance', `-${distance}px`);
     track.style.animation = 'partner-marquee-pixel 22s linear infinite';
   };
 
+  let resizeTimer;
   const init = () => {
     document.querySelectorAll('.recognition-track,.other-partner-track').forEach(setup);
   };
@@ -124,8 +133,12 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
   } else {
     init();
   }
+
   addEventListener('load', init, {once:true});
-  addEventListener('resize', init, {passive:true});
+  addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(init, 150);
+  }, {passive:true});
 })();
 </script>
 
