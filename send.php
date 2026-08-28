@@ -7,9 +7,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Honeypot tegen simpele spambots.
+// Honeypot: dit veld is verborgen voor normale bezoekers maar wordt vaak door spambots ingevuld.
 if (!empty($_POST['website'])) {
-    echo json_encode(['ok' => true]);
+    echo json_encode(['ok' => true, 'message' => 'Je aanmelding is verzonden!']);
     exit;
 }
 
@@ -39,7 +39,7 @@ $body = "[!| Aanmelding HVMC\n\n" .
         "{$motivation}\n";
 
 $headers = [
-    'From: Hero\'s Vault <noreply@hvmc.nl>',
+    'From: Hero\'s Vault <automail@hvmc.nl>',
     'Reply-To: ' . $email,
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=UTF-8'
