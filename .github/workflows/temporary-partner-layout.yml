@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fix active section while scrolling
+      - name: Fix active section and URL while scrolling
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text()
-          old = "const navLinks=document.querySelectorAll('.nav-link'),sections=[...navLinks].map(a=>document.getElementById(a.dataset.section)).filter(Boolean),updateNav=()=>{let current='home';sections.forEach(s=>{if(scrollY>=s.offsetTop-140)current=s.id});navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===current))};const hashSection=location.hash.slice(1);if(hashSection&&[...navLinks].some(a=>a.dataset.section===hashSection)){navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===hashSection))}else{updateNav()}addEventListener('scroll',updateNav,{passive:true});navLinks.forEach(a=>a.addEventListener('click',()=>{navLinks.forEach(x=>x.classList.remove('active'));a.classList.add('active')}));"
-          new = "const navLinks=document.querySelectorAll('.nav-link'),sections=[...navLinks].map(a=>document.getElementById(a.dataset.section)).filter(Boolean),updateNav=()=>{const marker=(document.querySelector('nav')?.getBoundingClientRect().height||0)+110;let current='home';for(const section of sections){if(section.getBoundingClientRect().top<=marker)current=section.id;else break}if(scrollY+innerHeight>=document.documentElement.scrollHeight-8)current=sections.at(-1)?.id||current;navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===current))};addEventListener('scroll',updateNav,{passive:true});addEventListener('resize',updateNav,{passive:true});addEventListener('hashchange',updateNav);navLinks.forEach(a=>a.addEventListener('click',()=>{navLinks.forEach(x=>x.classList.remove('active'));a.classList.add('active')}));updateNav();"
+          old = "const navLinks=document.querySelectorAll('.nav-link'),sections=[...navLinks].map(a=>document.getElementById(a.dataset.section)).filter(Boolean),updateNav=()=>{const marker=(document.querySelector('nav')?.getBoundingClientRect().height||0)+110;let current='home';for(const section of sections){if(section.getBoundingClientRect().top<=marker)current=section.id;else break}if(scrollY+innerHeight>=document.documentElement.scrollHeight-8)current=sections.at(-1)?.id||current;navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===current))};addEventListener('scroll',updateNav,{passive:true});addEventListener('resize',updateNav,{passive:true});addEventListener('hashchange',updateNav);navLinks.forEach(a=>a.addEventListener('click',()=>{navLinks.forEach(x=>x.classList.remove('active'));a.classList.add('active')}));updateNav();"
+          new = "const navLinks=document.querySelectorAll('.nav-link'),sections=[...navLinks].map(a=>document.getElementById(a.dataset.section)).filter(Boolean),updateNav=()=>{const marker=(document.querySelector('nav')?.getBoundingClientRect().height||0)+110;let current='home';for(const section of sections){if(section.getBoundingClientRect().top<=marker)current=section.id;else break}if(scrollY+innerHeight>=document.documentElement.scrollHeight-8)current=sections.at(-1)?.id||current;navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===current));if(location.hash!==`#${current}`)history.replaceState(null,'',`#${current}`)};addEventListener('scroll',updateNav,{passive:true});addEventListener('resize',updateNav,{passive:true});addEventListener('hashchange',updateNav);navLinks.forEach(a=>a.addEventListener('click',()=>{navLinks.forEach(x=>x.classList.remove('active'));a.classList.add('active')}));updateNav();"
           if old not in s:
               raise SystemExit('Expected navigation code not found')
           s = s.replace(old, new, 1)
@@ -27,5 +27,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'fix: donation section active while scrolling [partner-nav-fix]'
+          git commit -m 'fix: update URL hash while scrolling [partner-nav-fix]'
           git push
