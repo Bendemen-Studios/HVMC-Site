@@ -1,4 +1,4 @@
-name: Temporary partner layout fix
+name: Fix partner slider gap
 on:
   push:
     branches: [main]
@@ -6,28 +6,64 @@ permissions:
   contents: write
 jobs:
   fix:
-    if: "!contains(github.event.head_commit.message, 'partner-layout-fix')"
+    if: "!contains(github.event.head_commit.message, 'partner-slider-gap-fix')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Make partner sliders seamless
+      - name: Fix partner sliders with exact pixel loop
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text()
-          marker='/* seamless-partner-slider-fix */'
-          css='''\n          /* seamless-partner-slider-fix */\n          .recognitions,.other-partners{overflow:hidden!important;position:relative;width:100%;min-width:0}\n          .recognition-track,.other-partner-track{display:flex!important;width:max-content!important;animation:partner-scroll-seamless 22s linear infinite!important;will-change:transform}\n          .partner-slider-set{display:flex;flex:0 0 auto}\n          .recognition-slide,.other-partner-slide{flex:0 0 220px;width:220px}\n          @keyframes partner-scroll-seamless{from{transform:translateX(0)}to{transform:translateX(-50%)}}\n          @media(max-width:700px){.recognition-slide,.other-partner-slide{flex-basis:200px;width:200px}}\n          '''
-          if marker not in s:
-              s=s.replace('</style>', css+'</style>')
-          js='''\n          <script>\n          document.addEventListener('DOMContentLoaded',()=>{\n            document.querySelectorAll('.recognition-track,.other-partner-track').forEach(track=>{\n              const existing=[...track.children];\n              if(!existing.length) return;\n              let firstGroup=existing.find(el=>el.classList.contains('track-group'));\n              if(!firstGroup){\n                firstGroup=document.createElement('div');\n                firstGroup.className='partner-slider-set';\n                existing.forEach(el=>firstGroup.appendChild(el));\n              }else{\n                firstGroup.classList.add('partner-slider-set');\n              }\n              const clone=firstGroup.cloneNode(true);\n              track.replaceChildren(firstGroup,clone);\n              track.classList.add('seamless-ready');\n            });\n          });\n          </script>\n          '''
-          if 'seamless-ready' not in s:
-              s=s.replace('</body>', js+'</body>')
+          p = Path('index.html')
+          s = p.read_text()
+          css = '''
+          /* pixel-perfect partner marquee */
+          .recognitions,.other-partners{overflow:hidden!important;position:relative;width:100%;min-width:0}
+          .recognition-track,.other-partner-track{display:flex!important;width:max-content!important;animation:none!important;transform:translate3d(0,0,0);will-change:transform}
+          .recognition-slide,.other-partner-slide{flex:0 0 240px;width:240px}
+          .recognition-slide img{display:block;width:210px;max-width:100%;max-height:85px;object-fit:contain}
+          .other-partner-logo-link{display:flex;align-items:center;justify-content:center;width:100%;height:100%;text-decoration:none}
+          .other-partner-logo-link img{display:block;width:150px;max-width:100%;max-height:68px;object-fit:contain}
+          @keyframes partner-marquee-pixel{from{transform:translate3d(0,0,0)}to{transform:translate3d(var(--marquee-distance),0,0)}}
+          @media(max-width:700px){.recognition-slide,.other-partner-slide{flex-basis:200px;width:200px}.other-partner-logo-link img{width:135px;max-height:62px}}
+          '''
+          if '/* pixel-perfect partner marquee */' not in s:
+              s = s.replace('</style>', css + '\n</style>', 1)
+          js = '''
+          <script>
+          (() => {
+            const setup = (selector) => {
+              const track = document.querySelector(selector);
+              if (!track || track.dataset.marqueeReady === '1') return;
+              const items = Array.from(track.children);
+              if (!items.length) return;
+              const half = items.length / 2;
+              const duplicated = Number.isInteger(half) && items.slice(0, half).every((item, i) => item.outerHTML === items[i + half].outerHTML);
+              if (!duplicated) items.forEach(item => track.appendChild(item.cloneNode(true)));
+              const count = duplicated ? half : items.length;
+              const originals = Array.from(track.children).slice(0, count);
+              const distance = originals.reduce((sum, item) => sum + item.getBoundingClientRect().width, 0);
+              if (!distance) return;
+              track.style.setProperty('--marquee-distance', `-${distance}px`);
+              track.style.animation = 'partner-marquee-pixel 22s linear infinite';
+              track.dataset.marqueeReady = '1';
+            };
+            const init = () => { setup('.other-partner-track'); setup('.recognition-track'); };
+            addEventListener('load', init, {once:true});
+            addEventListener('resize', () => {
+              document.querySelectorAll('.other-partner-track,.recognition-track').forEach(t => { t.dataset.marqueeReady = ''; });
+              init();
+            }, {passive:true});
+          })();
+          </script>
+          '''
+          if 'partner-marquee-pixel' not in s.split('</body>', 1)[0]:
+              s = s.replace('</body>', js + '\n</body>', 1)
           p.write_text(s)
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'style: seamless partner sliders [partner-layout-fix]'
+          git commit -m 'fix: partner slider gap [partner-slider-gap-fix]'
           git push
