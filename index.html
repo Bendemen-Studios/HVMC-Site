@@ -31,7 +31,15 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
 .motto{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}.motto-icon{width:17px;height:17px;object-fit:contain;display:block;flex:0 0 17px}.donate{background:linear-gradient(135deg,#fff8e8,#f5edd9);border:1px solid #dec886;border-radius:22px;padding:40px;text-align:center}.footer{text-align:center;padding:35px;border-top:1px solid var(--line);color:#718074;background:#eef1eb}.pixel{font-weight:900;letter-spacing:.14em}.status{margin-top:15px;font-weight:700}.status.success{color:#24723c}.status.error{color:#a83232}
 @media(max-width:700px){nav{justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;padding:9px 10px}nav::-webkit-scrollbar{display:none}nav a{font-size:14px;padding:8px 9px}.hero{min-height:520px;padding:28px 14px}.hero-box{border-radius:18px;padding:24px 18px}.logo{width:120px;height:120px;margin-bottom:10px}.hero h1{font-size:clamp(38px,12vw,62px)}.hero p,.section p{font-size:16px}.section{padding:55px 16px}.cards,.contact-grid,.form-wrap{grid-template-columns:1fr}.card,.partner,.form,.incident{padding:22px}.partner-logo-link img{width:min(210px,76%);max-height:165px}.tabs,.device-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.tabs::-webkit-scrollbar,.device-tabs::-webkit-scrollbar{display:none}.tab,.device-tab{flex:0 0 auto;font-size:14px}.tab-panel .card{padding:20px}.btn{width:calc(100% - 16px);margin:6px 8px}.recognition-slide,.other-partner-slide{width:200px;min-width:200px;flex-basis:200px}.other-partner-logo-link img{width:135px;max-height:62px}.partner-contact{align-items:flex-start;padding:20px}.partner-contact-links{flex-direction:column;gap:4px}.donate{padding:28px 20px}.motto{gap:6px}.motto-icon{width:15px;height:15px;flex-basis:15px}}
 @media(min-width:701px){#aanmelden,#gamemodes,#kennisbank,#partners,#doneren{scroll-margin-top:80px}}
-</style>
+
+          /* seamless-partner-slider-fix */
+          .recognitions,.other-partners{overflow:hidden!important;position:relative;width:100%;min-width:0}
+          .recognition-track,.other-partner-track{display:flex!important;width:max-content!important;animation:partner-scroll-seamless 22s linear infinite!important;will-change:transform}
+          .partner-slider-set{display:flex;flex:0 0 auto}
+          .recognition-slide,.other-partner-slide{flex:0 0 220px;width:220px}
+          @keyframes partner-scroll-seamless{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+          @media(max-width:700px){.recognition-slide,.other-partner-slide{flex-basis:200px;width:200px}}
+          </style>
 </head>
 <body>
 <nav><a class="nav-link active" href="#home" data-section="home">Hero's Vault</a><a class="nav-link" href="#gamemodes" data-section="gamemodes">Gamemodes</a><a class="nav-link" href="#aanmelden" data-section="aanmelden">Aanmelden</a><a class="nav-link" href="#kennisbank" data-section="kennisbank">Kennisbank</a><a class="nav-link" href="#partners" data-section="partners">Partners</a><a class="nav-link" href="#doneren" data-section="doneren">Doneren</a></nav>
@@ -50,5 +58,25 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
 </main>
 <footer class="footer"><div class="pixel">HERO'S VAULT</div><p>Een veilige plek om te spelen, bouwen en held te worden.</p><p>© 2026 Hero's Vault</p></footer>
 <script>const tabs=document.querySelectorAll('.tab');tabs.forEach(t=>t.addEventListener('click',()=>{tabs.forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById(t.dataset.tab).classList.add('active')}));const deviceTabs=document.querySelectorAll('.device-tab');deviceTabs.forEach(t=>t.addEventListener('click',()=>{deviceTabs.forEach(x=>x.classList.remove('active'));document.querySelectorAll('.device-panel').forEach(x=>x.hidden=true);t.classList.add('active');document.getElementById(t.dataset.device).hidden=false}));const navLinks=document.querySelectorAll('.nav-link'),sections=[...navLinks].map(a=>document.getElementById(a.dataset.section)).filter(Boolean),updateNav=()=>{let current='home';sections.forEach(s=>{if(scrollY>=s.offsetTop-140)current=s.id});navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===current))};addEventListener('scroll',updateNav,{passive:true});updateNav();const form=document.getElementById('application-form'),status=document.getElementById('form-status'),button=document.getElementById('submit-button');form.addEventListener('submit',async e=>{e.preventDefault();status.className='status';status.textContent='Aanmelding wordt verzonden…';button.disabled=true;try{const r=await fetch('send.php',{method:'POST',body:new FormData(form),headers:{Accept:'application/json'}}),data=await r.json();if(!r.ok||!data.ok)throw Error(data.message||'Verzenden mislukt.');status.className='status success';status.textContent=data.message;form.reset()}catch(err){status.className='status error';status.textContent=err.message||'Er ging iets mis. Probeer het later opnieuw.'}finally{button.disabled=false}});</script>
-</body>
+
+          <script>
+          document.addEventListener('DOMContentLoaded',()=>{
+            document.querySelectorAll('.recognition-track,.other-partner-track').forEach(track=>{
+              const existing=[...track.children];
+              if(!existing.length) return;
+              let firstGroup=existing.find(el=>el.classList.contains('track-group'));
+              if(!firstGroup){
+                firstGroup=document.createElement('div');
+                firstGroup.className='partner-slider-set';
+                existing.forEach(el=>firstGroup.appendChild(el));
+              }else{
+                firstGroup.classList.add('partner-slider-set');
+              }
+              const clone=firstGroup.cloneNode(true);
+              track.replaceChildren(firstGroup,clone);
+              track.classList.add('seamless-ready');
+            });
+          });
+          </script>
+          </body>
 </html>
