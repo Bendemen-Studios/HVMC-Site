@@ -39,10 +39,11 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
           .recognition-slide,.other-partner-slide{flex:0 0 220px;width:220px}
           @keyframes partner-scroll-seamless{from{transform:translateX(0)}to{transform:translateX(-50%)}}
           @media(max-width:700px){.recognition-slide,.other-partner-slide{flex-basis:200px;width:200px}}
-          
-/* pixel-perfect partner marquee */
+
+
+/* partner slider animation fix */
 .recognitions,.other-partners{overflow:hidden!important;position:relative;width:100%;min-width:0}
-.recognition-track,.other-partner-track{display:flex!important;width:max-content!important;animation:none!important;transform:translate3d(0,0,0);will-change:transform}
+.recognition-track,.other-partner-track{display:flex!important;width:max-content!important;will-change:transform;animation:partner-marquee-pixel 22s linear infinite!important}
 .recognition-slide,.other-partner-slide{flex:0 0 240px;width:240px}
 .recognition-slide img{display:block;width:210px;max-width:100%;max-height:85px;object-fit:contain}
 .other-partner-logo-link{display:flex;align-items:center;justify-content:center;width:100%;height:100%;text-decoration:none}
@@ -89,5 +90,44 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
             });
           });
           </script>
-          </body>
+          
+<script>
+(() => {
+  const setup = (track) => {
+    if (!track) return;
+    const children = Array.from(track.children);
+    if (!children.length) return;
+
+    // Keep exactly two identical sets so the end joins the start seamlessly.
+    const half = children.length / 2;
+    const isDuplicated = Number.isInteger(half) &&
+      children.slice(0, half).every((item, i) => item.outerHTML === children[i + half].outerHTML);
+    if (!isDuplicated) {
+      children.forEach(item => track.appendChild(item.cloneNode(true)));
+    }
+
+    const count = isDuplicated ? half : children.length;
+    const originals = Array.from(track.children).slice(0, count);
+    const distance = originals.reduce((sum, item) => sum + item.getBoundingClientRect().width, 0);
+    if (!distance) return;
+
+    track.style.setProperty('--marquee-distance', `-${distance}px`);
+    track.style.animation = 'partner-marquee-pixel 22s linear infinite';
+  };
+
+  const init = () => {
+    document.querySelectorAll('.recognition-track,.other-partner-track').forEach(setup);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, {once:true});
+  } else {
+    init();
+  }
+  addEventListener('load', init, {once:true});
+  addEventListener('resize', init, {passive:true});
+})();
+</script>
+
+</body>
 </html>
