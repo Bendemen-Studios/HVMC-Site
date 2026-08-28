@@ -1,4 +1,4 @@
-name: Fix partner slider animation
+name: Fix partner navigation
 on:
   push:
     branches: [main]
@@ -6,80 +6,26 @@ permissions:
   contents: write
 jobs:
   fix:
-    if: "!contains(github.event.head_commit.message, 'partner-slider-animation-fix')"
+    if: "!contains(github.event.head_commit.message, 'partner-nav-fix')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fix seamless partner marquee and nav state
+      - name: Fix active section while scrolling
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
           p = Path('index.html')
           s = p.read_text()
-          css = '''
-          /* partner slider animation fix */
-          .recognitions,.other-partners{overflow:hidden!important;position:relative;width:100%;min-width:0}
-          .recognition-track,.other-partner-track{display:flex!important;width:max-content!important;will-change:transform;animation:partner-marquee-pixel 22s linear infinite!important}
-          .recognition-slide,.other-partner-slide{flex:0 0 240px;width:240px}
-          .recognition-slide img{display:block;width:210px;max-width:100%;max-height:85px;object-fit:contain}
-          .other-partner-logo-link{display:flex;align-items:center;justify-content:center;width:100%;height:100%;text-decoration:none}
-          .other-partner-logo-link img{display:block;width:150px;max-width:100%;max-height:68px;object-fit:contain}
-          @keyframes partner-marquee-pixel{from{transform:translate3d(0,0,0)}to{transform:translate3d(var(--marquee-distance),0,0)}}
-          @media(max-width:700px){.recognition-slide,.other-partner-slide{flex-basis:200px;width:200px}.other-partner-logo-link img{width:135px;max-height:62px}}
-          .recognitions .recognition-track,.other-partners .other-partner-track{animation-play-state:running!important}
-          .recognitions:has(.recognition-slide img:hover) .recognition-track,.other-partners:has(.other-partner-logo-link img:hover) .other-partner-track{animation-play-state:paused!important}
-          '''
-          s = re.sub(r'\s*/\* seamless-partner-slider-fix \*/.*?(?=\n\s*</style>)', '', s, flags=re.S)
-          s = re.sub(r'\s*/\* pixel-perfect partner marquee \*/.*?(?=\n\s*</style>)', '', s, flags=re.S)
-          s = re.sub(r'\s*/\* partner slider animation fix \*/.*?(?=\n\s*</style>)', '', s, flags=re.S)
-          s = s.replace('</style>', css + '\n</style>', 1)
-
-          old_nav = "const navLinks=document.querySelectorAll('.nav-link'),sections=[...navLinks].map(a=>document.getElementById(a.dataset.section)).filter(Boolean),updateNav=()=>{let current='home';sections.forEach(s=>{if(scrollY>=s.offsetTop-140)current=s.id});navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===current))};addEventListener('scroll',updateNav,{passive:true});updateNav();"
-          new_nav = "const navLinks=document.querySelectorAll('.nav-link'),sections=[...navLinks].map(a=>document.getElementById(a.dataset.section)).filter(Boolean),updateNav=()=>{let current='home';sections.forEach(s=>{if(scrollY>=s.offsetTop-140)current=s.id});navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===current))};const hashSection=location.hash.slice(1);if(hashSection&&[...navLinks].some(a=>a.dataset.section===hashSection)){navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===hashSection))}else{updateNav()}addEventListener('scroll',updateNav,{passive:true});navLinks.forEach(a=>a.addEventListener('click',()=>{navLinks.forEach(x=>x.classList.remove('active'));a.classList.add('active')}));"
-          if old_nav in s: s = s.replace(old_nav, new_nav, 1)
-
-          js = '''
-          <script>
-          (() => {
-            const waitForImages = async track => {
-              const images = Array.from(track.querySelectorAll('img'));
-              await Promise.all(images.map(img => {
-                if (img.complete) return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
-                return new Promise(resolve => {
-                  img.addEventListener('load', resolve, {once:true});
-                  img.addEventListener('error', resolve, {once:true});
-                });
-              }));
-            };
-            const setup = async track => {
-              if (!track) return;
-              Array.from(track.children).filter(item => item.dataset.marqueeClone === '1').forEach(item => item.remove());
-              const originals = Array.from(track.children);
-              if (!originals.length) return;
-              await waitForImages(track);
-              originals.forEach(item => { const clone=item.cloneNode(true); clone.dataset.marqueeClone='1'; track.appendChild(clone); });
-              const firstSet=Array.from(track.children).slice(0,originals.length);
-              const distance=firstSet.reduce((sum,item)=>sum+item.getBoundingClientRect().width,0);
-              if(!distance)return;
-              track.style.setProperty('--marquee-distance',`-${distance}px`);
-              track.style.animation='partner-marquee-pixel 22s linear infinite';
-            };
-            let resizeTimer;
-            const init=()=>document.querySelectorAll('.recognition-track,.other-partner-track').forEach(setup);
-            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
-            addEventListener('load',init,{once:true});
-            addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(init,150)},{passive:true});
-          })();
-          </script>
-          '''
-          s = re.sub(r'\s*<script>\s*\(\(\) => \{\s*const waitForImages = async \(track\).*?</script>', '', s, flags=re.S)
-          s = s.replace('</body>', js + '\n</body>', 1)
+          old = "const navLinks=document.querySelectorAll('.nav-link'),sections=[...navLinks].map(a=>document.getElementById(a.dataset.section)).filter(Boolean),updateNav=()=>{let current='home';sections.forEach(s=>{if(scrollY>=s.offsetTop-140)current=s.id});navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===current))};const hashSection=location.hash.slice(1);if(hashSection&&[...navLinks].some(a=>a.dataset.section===hashSection)){navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===hashSection))}else{updateNav()}addEventListener('scroll',updateNav,{passive:true});navLinks.forEach(a=>a.addEventListener('click',()=>{navLinks.forEach(x=>x.classList.remove('active'));a.classList.add('active')}));"
+          new = "const navLinks=document.querySelectorAll('.nav-link'),sections=[...navLinks].map(a=>document.getElementById(a.dataset.section)).filter(Boolean),updateNav=()=>{const marker=(document.querySelector('nav')?.getBoundingClientRect().height||0)+110;let current='home';for(const section of sections){if(section.getBoundingClientRect().top<=marker)current=section.id;else break}if(scrollY+innerHeight>=document.documentElement.scrollHeight-8)current=sections.at(-1)?.id||current;navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===current))};addEventListener('scroll',updateNav,{passive:true});addEventListener('resize',updateNav,{passive:true});addEventListener('hashchange',updateNav);navLinks.forEach(a=>a.addEventListener('click',()=>{navLinks.forEach(x=>x.classList.remove('active'));a.classList.add('active')}));updateNav();"
+          if old not in s:
+              raise SystemExit('Expected navigation code not found')
+          s = s.replace(old, new, 1)
           p.write_text(s)
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'fix: donation nav underline [partner-slider-animation-fix]'
+          git commit -m 'fix: donation section active while scrolling [partner-nav-fix]'
           git push
