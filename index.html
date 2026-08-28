@@ -42,11 +42,8 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
 .other-partner-logo-link img{display:block;width:150px;max-width:100%;max-height:68px;object-fit:contain}
 @keyframes partner-marquee-pixel{from{transform:translate3d(0,0,0)}to{transform:translate3d(var(--marquee-distance),0,0)}}
 @media(max-width:700px){.recognition-slide,.other-partner-slide{flex-basis:200px;width:200px}.other-partner-logo-link img{width:135px;max-height:62px}}
-
-/* Pause only while the actual logo is hovered. */
 .recognitions .recognition-track,.other-partners .other-partner-track{animation-play-state:running!important}
-.recognitions:has(.recognition-slide img:hover) .recognition-track,
-.other-partners:has(.other-partner-logo-link img:hover) .other-partner-track{animation-play-state:paused!important}
+.recognitions:has(.recognition-slide img:hover) .recognition-track,.other-partners:has(.other-partner-logo-link img:hover) .other-partner-track{animation-play-state:paused!important}
 
 </style>
 </head>
@@ -66,7 +63,7 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
 <section class="section" id="doneren"><div class="donate"><div class="kicker">Help onze wereld groeien</div><h2>Steun Hero's Vault</h2><p>Donaties helpen toekomstige serveruitbreidingen, nieuwe features en real-life events mogelijk te maken.</p><a class="btn" href="https://payment-links.mollie.com/payment/YoQpyxRxKiBZfnzJ86H8g" target="_blank" rel="noopener">💛 Doneer</a></div></section>
 </main>
 <footer class="footer"><div class="pixel">HERO'S VAULT</div><p>Een veilige plek om te spelen, bouwen en held te worden.</p><p>© 2026 Hero's Vault</p></footer>
-<script>const tabs=document.querySelectorAll('.tab');tabs.forEach(t=>t.addEventListener('click',()=>{tabs.forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById(t.dataset.tab).classList.add('active')}));const deviceTabs=document.querySelectorAll('.device-tab');deviceTabs.forEach(t=>t.addEventListener('click',()=>{deviceTabs.forEach(x=>x.classList.remove('active'));document.querySelectorAll('.device-panel').forEach(x=>x.hidden=true);t.classList.add('active');document.getElementById(t.dataset.device).hidden=false}));const navLinks=document.querySelectorAll('.nav-link'),sections=[...navLinks].map(a=>document.getElementById(a.dataset.section)).filter(Boolean),updateNav=()=>{let current='home';sections.forEach(s=>{if(scrollY>=s.offsetTop-140)current=s.id});navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===current))};addEventListener('scroll',updateNav,{passive:true});updateNav();const form=document.getElementById('application-form'),status=document.getElementById('form-status'),button=document.getElementById('submit-button');form.addEventListener('submit',async e=>{e.preventDefault();status.className='status';status.textContent='Aanmelding wordt verzonden…';button.disabled=true;try{const r=await fetch('send.php',{method:'POST',body:new FormData(form),headers:{Accept:'application/json'}}),data=await r.json();if(!r.ok||!data.ok)throw Error(data.message||'Verzenden mislukt.');status.className='status success';status.textContent=data.message;form.reset()}catch(err){status.className='status error';status.textContent=err.message||'Er ging iets mis. Probeer het later opnieuw.'}finally{button.disabled=false}});</script>
+<script>const tabs=document.querySelectorAll('.tab');tabs.forEach(t=>t.addEventListener('click',()=>{tabs.forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById(t.dataset.tab).classList.add('active')}));const deviceTabs=document.querySelectorAll('.device-tab');deviceTabs.forEach(t=>t.addEventListener('click',()=>{deviceTabs.forEach(x=>x.classList.remove('active'));document.querySelectorAll('.device-panel').forEach(x=>x.hidden=true);t.classList.add('active');document.getElementById(t.dataset.device).hidden=false}));const navLinks=document.querySelectorAll('.nav-link'),sections=[...navLinks].map(a=>document.getElementById(a.dataset.section)).filter(Boolean),updateNav=()=>{let current='home';sections.forEach(s=>{if(scrollY>=s.offsetTop-140)current=s.id});navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===current))};const hashSection=location.hash.slice(1);if(hashSection&&[...navLinks].some(a=>a.dataset.section===hashSection)){navLinks.forEach(a=>a.classList.toggle('active',a.dataset.section===hashSection))}else{updateNav()}addEventListener('scroll',updateNav,{passive:true});navLinks.forEach(a=>a.addEventListener('click',()=>{navLinks.forEach(x=>x.classList.remove('active'));a.classList.add('active')}));const form=document.getElementById('application-form'),status=document.getElementById('form-status'),button=document.getElementById('submit-button');form.addEventListener('submit',async e=>{e.preventDefault();status.className='status';status.textContent='Aanmelding wordt verzonden…';button.disabled=true;try{const r=await fetch('send.php',{method:'POST',body:new FormData(form),headers:{Accept:'application/json'}}),data=await r.json();if(!r.ok||!data.ok)throw Error(data.message||'Verzenden mislukt.');status.className='status success';status.textContent=data.message;form.reset()}catch(err){status.className='status error';status.textContent=err.message||'Er ging iets mis. Probeer het later opnieuw.'}finally{button.disabled=false}});</script>
 
           <script>
           document.addEventListener('DOMContentLoaded',()=>{
@@ -91,7 +88,7 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
 
 <script>
 (() => {
-  const waitForImages = async (track) => {
+  const waitForImages = async track => {
     const images = Array.from(track.querySelectorAll('img'));
     await Promise.all(images.map(img => {
       if (img.complete) return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
@@ -101,108 +98,24 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
       });
     }));
   };
-
-  const setup = async (track) => {
+  const setup = async track => {
     if (!track) return;
-
-    // Remove any old generated clones before rebuilding the two-set marquee.
     Array.from(track.children).filter(item => item.dataset.marqueeClone === '1').forEach(item => item.remove());
-
     const originals = Array.from(track.children);
     if (!originals.length) return;
-
-    // Preload/decode every logo before starting the animation so logos never pop in late.
     await waitForImages(track);
-
-    originals.forEach(item => {
-      const clone = item.cloneNode(true);
-      clone.dataset.marqueeClone = '1';
-      track.appendChild(clone);
-    });
-
-    const firstSet = Array.from(track.children).slice(0, originals.length);
-    const distance = firstSet.reduce((sum, item) => sum + item.getBoundingClientRect().width, 0);
-    if (!distance) return;
-
-    track.style.setProperty('--marquee-distance', `-${distance}px`);
-    track.style.animation = 'partner-marquee-pixel 22s linear infinite';
+    originals.forEach(item => { const clone=item.cloneNode(true); clone.dataset.marqueeClone='1'; track.appendChild(clone); });
+    const firstSet=Array.from(track.children).slice(0,originals.length);
+    const distance=firstSet.reduce((sum,item)=>sum+item.getBoundingClientRect().width,0);
+    if(!distance)return;
+    track.style.setProperty('--marquee-distance',`-${distance}px`);
+    track.style.animation='partner-marquee-pixel 22s linear infinite';
   };
-
   let resizeTimer;
-  const init = () => {
-    document.querySelectorAll('.recognition-track,.other-partner-track').forEach(setup);
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init, {once:true});
-  } else {
-    init();
-  }
-
-  addEventListener('load', init, {once:true});
-  addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(init, 150);
-  }, {passive:true});
-})();
-</script>
-
-
-<script>
-(() => {
-  const waitForImages = async (track) => {
-    const images = Array.from(track.querySelectorAll('img'));
-    await Promise.all(images.map(img => {
-      if (img.complete) return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
-      return new Promise(resolve => {
-        img.addEventListener('load', resolve, {once:true});
-        img.addEventListener('error', resolve, {once:true});
-      });
-    }));
-  };
-
-  const setup = async (track) => {
-    if (!track) return;
-
-    // Remove any old generated clones before rebuilding the two-set marquee.
-    Array.from(track.children).filter(item => item.dataset.marqueeClone === '1').forEach(item => item.remove());
-
-    const originals = Array.from(track.children);
-    if (!originals.length) return;
-
-    // Preload/decode every logo before starting the animation so logos never pop in late.
-    await waitForImages(track);
-
-    originals.forEach(item => {
-      const clone = item.cloneNode(true);
-      clone.dataset.marqueeClone = '1';
-      track.appendChild(clone);
-    });
-
-    const firstSet = Array.from(track.children).slice(0, originals.length);
-    const distance = firstSet.reduce((sum, item) => sum + item.getBoundingClientRect().width, 0);
-    if (!distance) return;
-
-    track.style.setProperty('--marquee-distance', `-${distance}px`);
-    track.style.animation = 'partner-marquee-pixel 22s linear infinite';
-  };
-
-  let resizeTimer;
-  const init = () => {
-    document.querySelectorAll('.recognition-track,.other-partner-track').forEach(setup);
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init, {once:true});
-  } else {
-    init();
-  }
-
-  addEventListener('load', init, {once:true});
-  addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(init, 150);
-  }, {passive:true});
+  const init=()=>document.querySelectorAll('.recognition-track,.other-partner-track').forEach(setup);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+  addEventListener('load',init,{once:true});
+  addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(init,150)},{passive:true});
 })();
 </script>
 
