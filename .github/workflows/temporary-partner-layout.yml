@@ -29,6 +29,11 @@ jobs:
           .other-partner-logo-link img{display:block;width:150px;max-width:100%;max-height:68px;object-fit:contain}
           @keyframes partner-marquee-pixel{from{transform:translate3d(0,0,0)}to{transform:translate3d(var(--marquee-distance),0,0)}}
           @media(max-width:700px){.recognition-slide,.other-partner-slide{flex-basis:200px;width:200px}.other-partner-logo-link img{width:135px;max-height:62px}}
+
+          /* Pause only while the actual logo is hovered. */
+          .recognitions .recognition-track,.other-partners .other-partner-track{animation-play-state:running!important}
+          .recognitions:has(.recognition-slide img:hover) .recognition-track,
+          .other-partners:has(.other-partner-logo-link img:hover) .other-partner-track{animation-play-state:paused!important}
           '''
 
           # Remove our previous partner-slider override blocks and install one clean version.
