@@ -10,24 +10,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Improve partner slider layout
+      - name: Make partner sliders seamless
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-          s=s.replace('.cards,.partners,.contact-grid,.form-wrap{display:grid;grid-template-columns:1fr 1fr;gap:20px}', '.cards,.partners,.contact-grid,.form-wrap{display:grid;grid-template-columns:1fr 1fr;gap:20px}.partners>*{min-width:0}')
-          s=s.replace('.recognitions,.other-partners{overflow:hidden;position:relative;background:var(--white);border:1px solid var(--line);border-radius:18px;padding:22px}', '.recognitions,.other-partners{overflow:hidden;position:relative;background:var(--white);border:1px solid var(--line);border-radius:18px;padding:16px;width:100%;min-width:0}')
-          s=s.replace('.recognition-track,.other-partner-track{display:flex;width:max-content;animation:partner-scroll 18s linear infinite}', '.recognition-track,.other-partner-track{display:flex;width:max-content;animation:partner-scroll 18s linear infinite;will-change:transform}')
-          s=s.replace('.other-partner-slide{height:95px;color:var(--muted);font-weight:700;font-size:17px}', '.other-partner-slide{height:95px;color:var(--muted);font-weight:700;font-size:16px;flex:0 0 25%;width:25%;min-width:25%;padding:10px 18px}')
-          old='<div class="other-partner-track"><div class="other-partner-slide">Nog geen overige partners.</div><div class="other-partner-slide">Nog geen overige partners.</div><div class="other-partner-slide">Nog geen overige partners.</div><div class="other-partner-slide">Nog geen overige partners.</div></div>'
-          new='<div class="other-partner-track"><div class="other-partner-slide">Nog geen overige partners.</div><div class="other-partner-slide">Nog geen overige partners.</div><div class="other-partner-slide">Nog geen overige partners.</div><div class="other-partner-slide">Nog geen overige partners.</div><div class="other-partner-slide">Nog geen overige partners.</div><div class="other-partner-slide">Nog geen overige partners.</div><div class="other-partner-slide">Nog geen overige partners.</div><div class="other-partner-slide">Nog geen overige partners.</div></div>'
-          s=s.replace(old,new)
+          marker='/* seamless-partner-slider-fix */'
+          css='''\n          /* seamless-partner-slider-fix */\n          .recognitions,.other-partners{overflow:hidden!important;position:relative;width:100%;min-width:0}\n          .recognition-track,.other-partner-track{display:flex!important;width:max-content!important;animation:partner-scroll-seamless 22s linear infinite!important;will-change:transform}\n          .partner-slider-set{display:flex;flex:0 0 auto}\n          .recognition-slide,.other-partner-slide{flex:0 0 220px;width:220px}\n          @keyframes partner-scroll-seamless{from{transform:translateX(0)}to{transform:translateX(-50%)}}\n          @media(max-width:700px){.recognition-slide,.other-partner-slide{flex-basis:200px;width:200px}}\n          '''
+          if marker not in s:
+              s=s.replace('</style>', css+'</style>')
+          js='''\n          <script>\n          document.addEventListener('DOMContentLoaded',()=>{\n            document.querySelectorAll('.recognition-track,.other-partner-track').forEach(track=>{\n              const existing=[...track.children];\n              if(!existing.length) return;\n              let firstGroup=existing.find(el=>el.classList.contains('track-group'));\n              if(!firstGroup){\n                firstGroup=document.createElement('div');\n                firstGroup.className='partner-slider-set';\n                existing.forEach(el=>firstGroup.appendChild(el));\n              }else{\n                firstGroup.classList.add('partner-slider-set');\n              }\n              const clone=firstGroup.cloneNode(true);\n              track.replaceChildren(firstGroup,clone);\n              track.classList.add('seamless-ready');\n            });\n          });\n          </script>\n          '''
+          if 'seamless-ready' not in s:
+              s=s.replace('</body>', js+'</body>')
           p.write_text(s)
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'style: improve other partners layout [partner-layout-fix]'
+          git commit -m 'style: seamless partner sliders [partner-layout-fix]'
           git push
