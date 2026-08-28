@@ -43,6 +43,11 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
 @keyframes partner-marquee-pixel{from{transform:translate3d(0,0,0)}to{transform:translate3d(var(--marquee-distance),0,0)}}
 @media(max-width:700px){.recognition-slide,.other-partner-slide{flex-basis:200px;width:200px}.other-partner-logo-link img{width:135px;max-height:62px}}
 
+/* Pause only while the actual logo is hovered. */
+.recognitions .recognition-track,.other-partners .other-partner-track{animation-play-state:running!important}
+.recognitions:has(.recognition-slide img:hover) .recognition-track,
+.other-partners:has(.other-partner-logo-link img:hover) .other-partner-track{animation-play-state:paused!important}
+
 </style>
 </head>
 <body>
@@ -82,6 +87,65 @@ nav a{color:#334139;text-decoration:none;font-weight:700;padding:9px 10px;border
             });
           });
           </script>
+
+
+<script>
+(() => {
+  const waitForImages = async (track) => {
+    const images = Array.from(track.querySelectorAll('img'));
+    await Promise.all(images.map(img => {
+      if (img.complete) return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+      return new Promise(resolve => {
+        img.addEventListener('load', resolve, {once:true});
+        img.addEventListener('error', resolve, {once:true});
+      });
+    }));
+  };
+
+  const setup = async (track) => {
+    if (!track) return;
+
+    // Remove any old generated clones before rebuilding the two-set marquee.
+    Array.from(track.children).filter(item => item.dataset.marqueeClone === '1').forEach(item => item.remove());
+
+    const originals = Array.from(track.children);
+    if (!originals.length) return;
+
+    // Preload/decode every logo before starting the animation so logos never pop in late.
+    await waitForImages(track);
+
+    originals.forEach(item => {
+      const clone = item.cloneNode(true);
+      clone.dataset.marqueeClone = '1';
+      track.appendChild(clone);
+    });
+
+    const firstSet = Array.from(track.children).slice(0, originals.length);
+    const distance = firstSet.reduce((sum, item) => sum + item.getBoundingClientRect().width, 0);
+    if (!distance) return;
+
+    track.style.setProperty('--marquee-distance', `-${distance}px`);
+    track.style.animation = 'partner-marquee-pixel 22s linear infinite';
+  };
+
+  let resizeTimer;
+  const init = () => {
+    document.querySelectorAll('.recognition-track,.other-partner-track').forEach(setup);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, {once:true});
+  } else {
+    init();
+  }
+
+  addEventListener('load', init, {once:true});
+  addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(init, 150);
+  }, {passive:true});
+})();
+</script>
 
 
 <script>
