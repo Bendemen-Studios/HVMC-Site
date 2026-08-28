@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Restore working partner marquee
+      - name: Fix seamless partner marquee and preload logos
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -31,7 +31,8 @@ jobs:
           @media(max-width:700px){.recognition-slide,.other-partner-slide{flex-basis:200px;width:200px}.other-partner-logo-link img{width:135px;max-height:62px}}
           '''
 
-          # Remove only our previous override blocks, then add the corrected one.
+          # Remove our previous partner-slider override blocks and install one clean version.
+          s = re.sub(r'\s*/\* seamless-partner-slider-fix \*/.*?(?=\n\s*</style>)', '', s, flags=re.S)
           s = re.sub(r'\s*/\* pixel-perfect partner marquee \*/.*?(?=\n\s*</style>)', '', s, flags=re.S)
           s = re.sub(r'\s*/\* partner slider animation fix \*/.*?(?=\n\s*</style>)', '', s, flags=re.S)
           s = s.replace('</style>', css + '\n</style>', 1)
@@ -39,28 +40,44 @@ jobs:
           js = '''
           <script>
           (() => {
-            const setup = (track) => {
+            const waitForImages = async (track) => {
+              const images = Array.from(track.querySelectorAll('img'));
+              await Promise.all(images.map(img => {
+                if (img.complete) return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+                return new Promise(resolve => {
+                  img.addEventListener('load', resolve, {once:true});
+                  img.addEventListener('error', resolve, {once:true});
+                });
+              }));
+            };
+
+            const setup = async (track) => {
               if (!track) return;
-              const children = Array.from(track.children);
-              if (!children.length) return;
 
-              // Keep exactly two identical sets so the end joins the start seamlessly.
-              const half = children.length / 2;
-              const isDuplicated = Number.isInteger(half) &&
-                children.slice(0, half).every((item, i) => item.outerHTML === children[i + half].outerHTML);
-              if (!isDuplicated) {
-                children.forEach(item => track.appendChild(item.cloneNode(true)));
-              }
+              // Remove any old generated clones before rebuilding the two-set marquee.
+              Array.from(track.children).filter(item => item.dataset.marqueeClone === '1').forEach(item => item.remove());
 
-              const count = isDuplicated ? half : children.length;
-              const originals = Array.from(track.children).slice(0, count);
-              const distance = originals.reduce((sum, item) => sum + item.getBoundingClientRect().width, 0);
+              const originals = Array.from(track.children);
+              if (!originals.length) return;
+
+              // Preload/decode every logo before starting the animation so logos never pop in late.
+              await waitForImages(track);
+
+              originals.forEach(item => {
+                const clone = item.cloneNode(true);
+                clone.dataset.marqueeClone = '1';
+                track.appendChild(clone);
+              });
+
+              const firstSet = Array.from(track.children).slice(0, originals.length);
+              const distance = firstSet.reduce((sum, item) => sum + item.getBoundingClientRect().width, 0);
               if (!distance) return;
 
               track.style.setProperty('--marquee-distance', `-${distance}px`);
               track.style.animation = 'partner-marquee-pixel 22s linear infinite';
             };
 
+            let resizeTimer;
             const init = () => {
               document.querySelectorAll('.recognition-track,.other-partner-track').forEach(setup);
             };
@@ -70,14 +87,18 @@ jobs:
             } else {
               init();
             }
+
             addEventListener('load', init, {once:true});
-            addEventListener('resize', init, {passive:true});
+            addEventListener('resize', () => {
+              clearTimeout(resizeTimer);
+              resizeTimer = setTimeout(init, 150);
+            }, {passive:true});
           })();
           </script>
           '''
 
-          # Replace any previous marquee setup script and install the corrected one.
-          s = re.sub(r'\s*<script>\s*\(\(\) => \{\s*const setup = \(selector\).*?</script>', '', s, flags=re.S)
+          # Replace any previous generated marquee script.
+          s = re.sub(r'\s*<script>\s*\(\(\) => \{\s*const setup = \(track\).*?</script>', '', s, flags=re.S)
           s = s.replace('</body>', js + '\n</body>', 1)
           p.write_text(s)
           PY
