@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install ImageMagick
-        run: sudo apt-get update && sudo apt-get install -y libheif-examples
+        run: sudo apt-get update && sudo apt-get install -y imagemagick ffmpeg
 
       - name: Prepare Partners folder
         shell: bash
@@ -30,7 +30,7 @@ jobs:
             if [ -f "$f" ]; then mv "$f" "Partners/$f"; fi
           done
           if [ -f "Partners/bendemen.avif" ]; then
-            heif-convert "Partners/bendemen.avif" "Partners/bendemen.png"
+            ffmpeg -hide_banner -loglevel error -y -i "Partners/bendemen.avif" -frames:v 1 "Partners/bendemen.png"
           fi
 
       - name: Convert partner logos to AVIF and keep PNG fallback
@@ -40,12 +40,13 @@ jobs:
           shopt -s nullglob
           for png in Partners/*.png; do
             base="${png%.png}"
-            heif-enc --avif -q 82 "$png" -o "${base}.avif"
+            convert "$png" -background white -alpha remove -alpha off "/tmp/partner-logo.png"
+            ffmpeg -hide_banner -loglevel error -y -i "/tmp/partner-logo.png" -frames:v 1 -c:v libaom-av1 -crf 30 -b:v 0 -still-picture 1 "${base}.avif"
           done
           for avif in Partners/*.avif; do
             base="${avif%.avif}"
             if [ ! -f "${base}.png" ]; then
-              heif-convert "$avif" "${base}.png"
+              ffmpeg -hide_banner -loglevel error -y -i "$avif" -frames:v 1 "${base}.png"
             fi
           done
 
