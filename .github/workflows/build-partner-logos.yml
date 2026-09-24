@@ -1,0 +1,44 @@
+name: Build partner logos
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Partners/bendemen.svg"
+      - "Partners/bendemenstudios.svg"
+      - ".github/workflows/build-partner-logos.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install image tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin libavif-bin
+
+      - name: Render PNG fallbacks
+        run: |
+          set -e
+          rsvg-convert -w 1400 -f png -o Partners/bendemen.png Partners/bendemen.svg
+          rsvg-convert -w 1400 -f png -o Partners/bendemenstudios.png Partners/bendemenstudios.svg
+
+      - name: Build AVIF files
+        run: |
+          set -e
+          avifenc --lossless Partners/bendemen.png Partners/bendemen.avif
+          avifenc --lossless Partners/bendemenstudios.png Partners/bendemenstudios.avif
+
+      - name: Commit generated logo assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Partners/bendemen.png Partners/bendemen.avif Partners/bendemenstudios.png Partners/bendemenstudios.avif
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Build AVIF partner logos with PNG fallbacks"
+          git pull --rebase origin main
+          git push
