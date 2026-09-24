@@ -32,8 +32,8 @@ jobs:
             src="/tmp/$name-source.png"
             out="Partners/$name.png"
             mask="/tmp/$name-mask.png"
-            magick "$src" -colorspace Gray -evaluate multiply 10 -clamp "$mask"
-            magick "$src" -alpha off -fill black -colorize 100 "$mask" -alpha off -compose CopyOpacity -composite "$out"
+            convert "$src" -colorspace Gray -evaluate multiply 10 -clamp "$mask"
+            convert "$src" -alpha off -fill black -colorize 100 "$mask" -alpha off -compose CopyOpacity -composite "$out"
           done
       - name: Rebuild AVIF files
         shell: bash
