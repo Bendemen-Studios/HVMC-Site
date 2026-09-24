@@ -1,4 +1,5 @@
 name: Fix partner logo backgrounds
+# rebuild transparent PNG assets
 on:
   push:
     branches: [main]
