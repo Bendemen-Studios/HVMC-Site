@@ -16,8 +16,10 @@ if (!empty($_POST['website'])) {
 $minecraft = trim((string)($_POST['minecraft_name'] ?? ''));
 $email = trim((string)($_POST['email'] ?? ''));
 $motivation = trim((string)($_POST['motivation'] ?? ''));
+$platform = trim((string)($_POST['platform'] ?? ''));
 
-if ($minecraft === '' || $motivation === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+$allowedPlatforms = ['Java Edition', 'Bedrock Edition'];
+if ($minecraft === '' || $motivation === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || !in_array($platform, $allowedPlatforms, true)) {
     http_response_code(422);
     echo json_encode(['ok' => false, 'message' => 'Vul alle velden correct in.']);
     exit;
@@ -34,7 +36,8 @@ $to = 'info@bendemen.nl';
 $subject = '[!| Aanmelding HVMC';
 $body = "[!| Aanmelding HVMC\n\n" .
         "Minecraft Naam: {$minecraft}\n" .
-        "Emailadres voor Reactie: {$email}\n\n" .
+        "Emailadres voor Reactie: {$email}\n" .
+        "Platform: {$platform}\n\n" .
         "Speel Motivatie\n" .
         "{$motivation}\n";
 
