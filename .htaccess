@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# Laat bestaande bestanden en mappen ongemoeid.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Section-URLs zoals /server-regels laden de single-page index.
+RewriteRule ^ index.html [L]
