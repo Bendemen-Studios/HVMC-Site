@@ -17,9 +17,10 @@ $minecraft = trim((string)($_POST['minecraft_name'] ?? ''));
 $email = trim((string)($_POST['email'] ?? ''));
 $motivation = trim((string)($_POST['motivation'] ?? ''));
 $platform = trim((string)($_POST['platform'] ?? ''));
+$rulesAgreement = (string)($_POST['rules_agreement'] ?? '');
 
 $allowedPlatforms = ['Java Edition', 'Bedrock Edition'];
-if ($minecraft === '' || $motivation === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || !in_array($platform, $allowedPlatforms, true)) {
+if ($minecraft === '' || $motivation === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || !in_array($platform, $allowedPlatforms, true) || $rulesAgreement !== '1') {
     http_response_code(422);
     echo json_encode(['ok' => false, 'message' => 'Vul alle velden correct in.']);
     exit;
@@ -37,7 +38,8 @@ $subject = '[!| Aanmelding HVMC';
 $body = "[!| Aanmelding HVMC\n\n" .
         "Minecraft Naam: {$minecraft}\n" .
         "Emailadres voor Reactie: {$email}\n" .
-        "Platform: {$platform}\n\n" .
+        "Platform: {$platform}\n" .
+        "Akkoord met Server Regels: Ja\n\n" .
         "Speel Motivatie\n" .
         "{$motivation}\n";
 
