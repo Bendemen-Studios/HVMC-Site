@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/gamemodes", "destination": "/index.html" },
+    { "source": "/server-regels", "destination": "/index.html" },
+    { "source": "/aanmelden", "destination": "/index.html" },
+    { "source": "/kennisbank", "destination": "/index.html" },
+    { "source": "/partners", "destination": "/index.html" },
+    { "source": "/doneren", "destination": "/index.html" }
+  ]
+}
