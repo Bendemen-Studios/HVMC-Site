@@ -1,17 +1,11 @@
-Options -MultiViews
-DirectoryIndex index.html
-
 RewriteEngine On
-RewriteBase /
 
-# Bestaande bestanden blijven rechtstreeks bereikbaar.
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
+# Dedicated server rules page.
+RewriteRule ^server-regels/?$ server-regels.html [L]
 
-# Mooie sectie-URL's zoals /aanmelden en /server-regels
-# laden de single-page website zonder een 404.
+# Laat bestaande bestanden en mappen ongemoeid.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Overige section-URLs zoals /aanmelden laden de single-page index.
 RewriteRule ^ index.html [L]
-
-# Extra fallback voor hosts waarop de rewrite-regel niet wordt toegepast.
-ErrorDocument 404 /index.html
