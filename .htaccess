@@ -1,7 +1,8 @@
 RewriteEngine On
 
 # Dedicated server rules page.
-RewriteRule ^server-regels/?$ server-regels.html [L]
+RewriteRule ^server-regels/?$ /regels [R=301,L]
+RewriteRule ^regels/?$ server-regels.html [L]
 
 # Laat bestaande bestanden en mappen ongemoeid.
 RewriteCond %{REQUEST_FILENAME} !-f
