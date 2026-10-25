@@ -34,8 +34,8 @@ if (mb_strlen($minecraft) > 100 || mb_strlen($email) > 254 || mb_strlen($motivat
 }
 
 $to = 'info@bendemen.nl';
-$subject = '[!| Aanmelding HVMC';
-$body = "[!| Aanmelding HVMC\n\n" .
+$subject = '[!] Aanmelding HVMC';
+$body = "[!] Aanmelding HVMC\n\n" .
         "Minecraft Naam: {$minecraft}\n" .
         "Emailadres voor Reactie: {$email}\n" .
         "Platform: {$platform}\n" .
